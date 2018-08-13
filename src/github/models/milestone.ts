@@ -6,18 +6,18 @@
 import { Actor } from '.';
 
 export class Milestone {
-    public closed: boolean;
-    public closedAt: Date;
-    public createdAt: Date;
-    public creator: Actor;
-    public description: string;
-    public id: string;
-    public number: number;
-    public repositoryId: string;
-    public state: MilestoneState;
-    public title: string;
-    public updatedAt: Date;
-    public url: string;
+    public closed!: boolean;
+    public closedAt!: Date;
+    public createdAt!: Date;
+    public creator!: Actor;
+    public description!: string;
+    public id!: string;
+    public number!: number;
+    public repositoryId!: string;
+    public state!: MilestoneState;
+    public title!: string;
+    public updatedAt!: Date;
+    public url!: string;
 
     public constructor() {
 

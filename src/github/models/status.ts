@@ -6,8 +6,8 @@
 import { StatusContext, StatusState } from '.';
 
 export class Status {
-    public commitId: string;
-    public id: string;
-    public state: StatusState;
-    public contexts: StatusContext;
+    public commitId!: string;
+    public id!: string;
+    public state!: StatusState;
+    public contexts!: StatusContext;
 }

@@ -4,7 +4,7 @@ import { GraphqlService } from './graphql.service';
 import { ResponseProcessorService } from './response-processor.service';
 import { GitResource, GitResponseStatus } from '../models/git-pool-request';
 
-const request = require('request');
+const request = require('request-promise-native');
 
 @Injectable()
 export class PoolProcessorService {
@@ -27,10 +27,6 @@ export class PoolProcessorService {
   public pendingRequests = [];
   public pendingRequestsPromises = [];
   public poolInterval;
-
-  public globalCounter = 0;
-  public globalResponse = 0;
-  public globalErrors = 0;
 
   public constructor(
     private fbService: FirebaseService,
@@ -336,30 +332,21 @@ export class PoolProcessorService {
     return this.gitPromise(query);
   };
 
-  public gitPromise = (query) => {
-    return new Promise((resolve, reject) => {
-      request(this.url, {
+  public gitPromise = async (query) => {
+
+    try {
+      const res = await request(this.url, {
         method: 'POST',
         headers: this.header,
         body: JSON.stringify({
-          'query': query,
+          query,
           'variables': '{}',
         }),
-      }, (err, res) => {
-        if (err) {
-          reject(null);
-        }
-        try {
-          res && res.body
-          && JSON.parse(res.body.toString()).data !== 'null'
-            ? resolve(JSON.parse(res.body.toString()).data)
-            : reject(null);
-        } catch (e) {
-          reject(null);
-        }
       });
-    }).catch(() => {
+
+      return JSON.parse(res).data;
+    } catch (_e) {
       return null;
-    });
+    }
   };
 }

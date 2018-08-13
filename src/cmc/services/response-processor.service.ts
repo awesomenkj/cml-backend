@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { FirebaseService } from '../../shared/services/firebase.service';
 
+export  type Coin = {
+  cmcId: string,
+  symbol: string,
+  name: string,
+  slug: string,
+};
+
 @Injectable()
 export class ResponseProcessorService {
 
@@ -17,9 +24,9 @@ export class ResponseProcessorService {
   }
 
   public processListings = (response: any[]) => {
-    let coins = [];
+    let coins: Coin[] = [];
     response.forEach((entry, idx) => {
-      const coin = {
+      const coin: Coin = {
         cmcId: entry.id,
         symbol: entry.symbol,
         name: entry.name,
@@ -28,7 +35,7 @@ export class ResponseProcessorService {
       coins.push(coin);
       if (idx % 500 === 499 || idx === response.length - 1) {
         const batch = this.fbService.db.batch();
-        coins.forEach((c) => {
+        coins.forEach((c: Coin) => {
           const ref = this.coinsCol.doc(c.slug);
           batch.set(ref, c, { merge: true });
         });

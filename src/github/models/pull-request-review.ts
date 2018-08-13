@@ -6,25 +6,25 @@
 import { Actor, CommentAuthorAssociation } from '.';
 
 export class PullRequestReview {
-    public author: Actor;
-    public authorAssociation: CommentAuthorAssociation;
-    public body: string;
-    public commitId: string;
-    public createdAt: Date;
-    public createdViaEmail: boolean;
-    public databaseId: number;
-    public editor: Actor;
-    public id: string;
-    public includesCreatedEdit: boolean;
-    public lastEditedAt: Date;
-    public publishedAt: Date;
-    public pullRequestId: string;
-    public repositoryId: string;
-    public resourcePath: string;
+    public author!: Actor;
+    public authorAssociation!: CommentAuthorAssociation;
+    public body!: string;
+    public commitId!: string;
+    public createdAt!: Date;
+    public createdViaEmail!: boolean;
+    public databaseId!: number;
+    public editor!: Actor;
+    public id!: string;
+    public includesCreatedEdit!: boolean;
+    public lastEditedAt!: Date;
+    public publishedAt!: Date;
+    public pullRequestId!: string;
+    public repositoryId!: string;
+    public resourcePath!: string;
     public state;
-    public submittedAt: Date;
-    public updatedAt: Date;
-    public url: string;
+    public submittedAt!: Date;
+    public updatedAt!: Date;
+    public url!: string;
 
     public constructor() {
 

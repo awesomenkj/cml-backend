@@ -4,11 +4,11 @@
  * https://developer.github.com/v4/object/gitactor/
  */
 export class GitActor {
-    public avatarUrl: string;
-    public date: Date;
-    public email: string;
-    public name: string;
-    public userId: string;
+    public avatarUrl!: string;
+    public date!: Date;
+    public email!: string;
+    public name!: string;
+    public userId!: string;
 
     public constructor() {
 

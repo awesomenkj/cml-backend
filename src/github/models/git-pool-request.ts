@@ -6,9 +6,9 @@ import { GitPoolRequestDataEntry } from '.';
  */
 export class GitPoolRequest {
 
-    public resource: GitResource;
-    public type: GitRequestType;
-    public status: GitResponseStatus;
+    public resource!: GitResource;
+    public type!: GitRequestType;
+    public status!: GitResponseStatus;
     public createdAt;
     public updatedAt;
     public data: GitPoolRequestDataEntry[] = [];

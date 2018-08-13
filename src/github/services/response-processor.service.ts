@@ -1129,7 +1129,6 @@ export class ResponseProcessorService {
       .then((docs) => {
         const status = [];
         status[asset] = docs.docs.length;
-        // console.log('summary of '+asset+' of '+repositoryId,status)
         return this.fbService.db.collection('cml-git-repositories-assets')
           .doc(repositoryId)
           .set({

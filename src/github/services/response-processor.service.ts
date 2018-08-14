@@ -32,390 +32,45 @@ export class ResponseProcessorService {
         case GitResource.ORGANIZATION:
           switch (query.request.type) {
             case GitRequestType.INIT:
-              query.response.then((data) => {
-                if (data && data.organization) {
-                  this.saveOrganization(data, query.id, query.request.data[1].value, query.request.data[2].value)
-                    .then(() => {
-                      this.requestsCol.doc(query.id)
-                        .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
-                    });
-                } else {
-                  this.requestsCol.doc(query.id)
-                    .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
-                }
-              });
+              this.initOrgRequest(query);
               break;
             case GitRequestType.UPDATE:
-              query.response.then((data) => {
-                if (data && data.organization) {
-                  this.updateOrganization(data, query.id, query.request.data[1].value, query.request.data[2].value)
-                    .then(() => {
-                      this.requestsCol.doc(query.id)
-                        .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
-                    });
-                }
-              });
+              this.updateOrgRequest(query);
               break;
           }
           break;
         case GitResource.ORGANIZATION_MEMBERS:
-          query.response.then((data) => {
-            if (data && data.organization) {
-              this.saveOrganizationMembers(
-                data.organization.members,
-                data.organization.login,
-                query.request.data[2].value)
-                .then(() => {
-                  this.requestsCol.doc(query.id)
-                    .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
-                  if (data.organization.members.pageInfo.hasNextPage) {
-                    this.githubService
-                      .requestOrganizationMembersOffset(
-                        data.organization.login,
-                        data.organization.members.pageInfo.endCursor,
-                        query.request.parent, query.request.data[2].value);
-                  } else {
-                    // process organization members summary
-                  }
-                });
-            } else {
-              this.requestsCol.doc(query.id)
-                .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
-            }
-          });
+          this.orgMemberRequest(query);
           break;
         case GitResource.ORGANIZATION_REPOSITORIES:
-          query.response.then((data) => {
-            if (data && data.organization) {
-              this.saveOrganizationRepositories(
-                data.organization.repositories,
-                data.organization.id,
-                query.request.data[2].value)
-                .then(() => {
-                  this.requestsCol.doc(query.id)
-                    .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
-                  if (data.organization.repositories.pageInfo.hasNextPage) {
-                    this.githubService
-                      .requestOrganizationRepositoriesOffset(
-                        data.organization.login,
-                        data.organization.repositories.pageInfo.endCursor,
-                        query.request.parent, query.request.data[2].value);
-                  } else {
-                    // process organization repositories summary
-                    this.updateRepositoriesSummary(data.organization.id, query.request.data[0].value);
-                  }
-                });
-            } else {
-              this.requestsCol.doc(query.id)
-                .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
-            }
-          });
+          this.orgRepoRequest(query);
           break;
         case GitResource.REPOSITORY:
-          query.response.then((data) => {
-            if (data && data.repository) {
-              // save the repo data
-              this.saveRepositoryAssets(data.repository)
-                .then((response) => {
-                  this.requestsCol.doc(query.id)
-                    .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
-                  if (response) {
-                    // check for pagination on all repository assets
-                    if (data.repository.deployKeys.pageInfo.hasNextPage) {
-                      this.githubService
-                        .requestRepositoriesDataOffset(
-                          GitResource.REPOSITORY_DEPLOY_KEYS,
-                          query.request.data[0].value,
-                          query.request.data[1].value,
-                          data.repository.deployKeys.pageInfo.endCursor, 1);
-                    } else {
-                      this.updateRepositoryAssetSummary(
-                        data.repository.id,
-                        GitResource.REPOSITORY_DEPLOY_KEYS);
-                    }
-
-                    if (data.repository.deployments.pageInfo.hasNextPage) {
-                      this.githubService
-                        .requestRepositoriesDataOffset(
-                          GitResource.REPOSITORY_DEPLOYMENTS,
-                          query.request.data[0].value,
-                          query.request.data[1].value,
-                          data.repository.deployments.pageInfo.endCursor, 1);
-                    } else {
-                      this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_DEPLOYMENTS);
-                    }
-
-                    if (data.repository.issues.pageInfo.hasNextPage) {
-                      this.githubService
-                        .requestRepositoriesDataOffset(
-                          GitResource.REPOSITORY_ISSUES,
-                          query.request.data[0].value,
-                          query.request.data[1].value,
-                          data.repository.issues.pageInfo.endCursor, 1);
-                    } else {
-                      this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_ISSUES);
-                    }
-
-                    if (data.repository.milestones.pageInfo.hasNextPage) {
-                      this.githubService.requestRepositoriesDataOffset(
-                        GitResource.REPOSITORY_MILESTONES,
-                        query.request.data[0].value,
-                        query.request.data[1].value,
-                        data.repository.milestones.pageInfo.endCursor, 1);
-                    } else {
-                      this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_MILESTONES);
-                    }
-
-                    if (data.repository.projects.pageInfo.hasNextPage) {
-                      this.githubService
-                        .requestRepositoriesDataOffset(
-                          GitResource.REPOSITORY_PROJECTS,
-                          query.request.data[0].value,
-                          query.request.data[1].value,
-                          data.repository.projects.pageInfo.endCursor, 1);
-                    } else {
-                      this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_PROJECTS);
-                    }
-
-                    if (data.repository.pullRequests.pageInfo.hasNextPage) {
-                      this.githubService.requestRepositoriesDataOffset(
-                        GitResource.REPOSITORY_PULL_REQUESTS,
-                        query.request.data[0].value,
-                        query.request.data[1].value,
-                        data.repository.pullRequests.pageInfo.endCursor, 1);
-                    } else {
-                      this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_PULL_REQUESTS);
-                    }
-
-                    if (data.repository.releases.pageInfo.hasNextPage) {
-                      this.githubService.requestRepositoriesDataOffset(
-                        GitResource.REPOSITORY_RELEASES,
-                        query.request.data[0].value,
-                        query.request.data[1].value,
-                        data.repository.releases.pageInfo.endCursor, 1);
-                    } else {
-                      this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_RELEASES);
-                    }
-                  }
-                });
-            } else {
-              this.requestsCol.doc(query.id)
-                .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
-            }
-          });
+          this.repoRequest(query);
           break;
         case GitResource.REPOSITORY_DEPLOY_KEYS:
-          query.response.then((data) => {
-            if (data && data.repository) {
-              const deployKeys = this.mapRepositoryDeployKeys(data.repository.deployKeys.edges, data.repository.id);
-              this.saveRepositoryDeployKeys(deployKeys, data.repository.id)
-                .then(() => {
-                  this.requestsCol.doc(query.id)
-                    .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
-                  if (data.repository.deployKeys.pageInfo.hasNextPage) {
-                    this.githubService.requestRepositoriesDataOffset(
-                      GitResource.REPOSITORY_DEPLOY_KEYS,
-                      query.request.data[0].value,
-                      query.request.data[1].value,
-                      data.repository.deployKeys.pageInfo.endCursor,
-                      parseInt(query.request.data[3].value) + 1);
-                  } else {
-                    this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_DEPLOY_KEYS);
-                  }
-                });
-            } else {
-              this.requestsCol
-                .doc(query.id)
-                .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
-            }
-          });
+          this.repoDeployKeysRequest(query);
           break;
         case GitResource.REPOSITORY_DEPLOYMENTS:
-          query.response.then((data) => {
-            if (data && data.repository) {
-              const deployments = this.mapRepositoryDeployments(data.repository.deployments.edges, data.repository.id);
-              this.saveRepositoryDeployments(deployments, data.repository.id)
-                .then(() => {
-                  this.requestsCol.doc(query.id)
-                    .update({
-                      status: GitResponseStatus.SUCCESS,
-                      updatedAt: new Date().toISOString(),
-                    });
-                  if (data.repository.deployments.pageInfo.hasNextPage) {
-                    this.githubService
-                      .requestRepositoriesDataOffset(GitResource.REPOSITORY_DEPLOYMENTS,
-                        query.request.data[0].value,
-                        query.request.data[1].value,
-                        data.repository.deployments.pageInfo.endCursor,
-                        parseInt(query.request.data[3].value) + 1);
-                  } else {
-                    this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_DEPLOYMENTS);
-                  }
-                });
-            } else {
-              this.requestsCol
-                .doc(query.id)
-                .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
-            }
-          });
+          this.repoDeploymentsRequest(query);
           break;
         case GitResource.REPOSITORY_FORKS:
-          query.response.then((data) => {
-            if (data && data.repository) {
-              const forks = this.mapRepositoryForks(data.repository.forks.edges, data.repository.id);
-              this.saveRepositoryForks(forks, data.repository.id)
-                .then(() => {
-                  this.requestsCol.doc(query.id)
-                    .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
-                  if (data.repository.forks.pageInfo.hasNextPage) {
-                    this.githubService
-                      .requestRepositoriesDataOffset(
-                        GitResource.REPOSITORY_FORKS,
-                        query.request.data[0].value,
-                        query.request.data[1].value,
-                        data.repository.forks.pageInfo.endCursor,
-                        parseInt(query.request.data[3].value) + 1);
-                  } else {
-                    this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_FORKS);
-                  }
-                });
-            } else {
-              this.requestsCol.doc(query.id)
-                .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
-            }
-          });
+          this.repoForksRequest(query);
           break;
         case GitResource.REPOSITORY_ISSUES:
-          query.response.then((data) => {
-            if (data && data.repository) {
-              const issues = this.mapRepositoryIssues(data.repository.issues.edges, data.repository.id);
-              this.saveRepositoryIssues(issues, data.repository.id)
-                .then(() => {
-                  this.requestsCol.doc(query.id)
-                    .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
-                  if (data.repository.issues.pageInfo.hasNextPage) {
-                    this.githubService
-                      .requestRepositoriesDataOffset(
-                        GitResource.REPOSITORY_ISSUES,
-                        query.request.data[0].value,
-                        query.request.data[1].value,
-                        data.repository.issues.pageInfo.endCursor,
-                        parseInt(query.request.data[3].value) + 1);
-                  } else {
-                    this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_ISSUES);
-                  }
-                });
-            } else {
-              this.requestsCol.doc(query.id)
-                .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
-            }
-          });
+          this.repoIssuesRequest(query);
           break;
         case GitResource.REPOSITORY_MILESTONES:
-          query.response.then((data) => {
-            if (data && data.repository) {
-              const milestones = this.mapRepositoryMilestones(data.repository.milestones.edges, data.repository.id);
-              this.saveRepositoryMilestones(milestones, data.repository.id)
-                .then(() => {
-                  if (data.repository.milestones.pageInfo.hasNextPage) {
-                    this.githubService
-                      .requestRepositoriesDataOffset(
-                        GitResource.REPOSITORY_MILESTONES,
-                        query.request.data[0].value,
-                        query.request.data[1].value,
-                        data.repository.milestones.pageInfo.endCursor,
-                        parseInt(query.request.data[3].value) + 1);
-                  } else {
-                    this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_MILESTONES);
-                  }
-                });
-            } else {
-              this.requestsCol
-                .doc(query.id)
-                .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
-            }
-          });
+          this.repoMileStonesRequest(query);
           break;
         case GitResource.REPOSITORY_PROJECTS:
-          query.response.then((data) => {
-            if (data && data.repository) {
-              this.requestsCol.doc(query.id)
-                .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
-              const projects = this.mapRepositoryProjects(data.repository.projects.edges, data.repository.id);
-              this.saveRepositoryProjects(projects, data.repository.id)
-                .then(() => {
-                  if (data.repository.projects.pageInfo.hasNextPage) {
-                    this.githubService
-                      .requestRepositoriesDataOffset(
-                        GitResource.REPOSITORY_PROJECTS,
-                        query.request.data[0].value,
-                        query.request.data[1].value,
-                        data.repository.projects.pageInfo.endCursor,
-                        parseInt(query.request.data[3].value) + 1);
-                  } else {
-                    this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_PROJECTS);
-                  }
-                });
-            } else {
-              this.requestsCol.doc(query.id)
-                .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
-            }
-          });
+          this.repoProjectsRequest(query);
           break;
         case GitResource.REPOSITORY_PULL_REQUESTS:
-          query.response.then((data) => {
-            if (data && data.repository) {
-              this.requestsCol.doc(query.id)
-                .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
-              const pullRequests =
-                this.mapRepositoryPullRequests(data.repository.pullRequests.edges, data.repository.id);
-              this.saveRepositoryPullRequests(pullRequests, data.repository.id)
-                .then(() => {
-                  if (data.repository.pullRequests.pageInfo.hasNextPage) {
-                    this.githubService
-                      .requestRepositoriesDataOffset(
-                        GitResource.REPOSITORY_PULL_REQUESTS,
-                        query.request.data[0].value,
-                        query.request.data[1].value,
-                        data.repository.pullRequests.pageInfo.endCursor,
-                        parseInt(query.request.data[3].value) + 1);
-                  } else {
-                    this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_PULL_REQUESTS);
-                  }
-                });
-            } else {
-              this.requestsCol
-                .doc(query.id)
-                .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
-            }
-          });
+          this.repoPullRequestsRequest(query);
           break;
         case GitResource.REPOSITORY_RELEASES:
-          query.response.then((data) => {
-            if (data && data.repository) {
-              this.requestsCol.doc(query.id)
-                .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
-              const releases = this.mapRepositoryReleases(data.repository.releases.edges, data.repository.id);
-              this.saveRepositoryReleases(releases, data.repository.id)
-                .then(() => {
-                  if (data.repository.releases.pageInfo.hasNextPage) {
-                    this.githubService
-                      .requestRepositoriesDataOffset(
-                        GitResource.REPOSITORY_RELEASES,
-                        query.request.data[0].value,
-                        query.request.data[1].value,
-                        data.repository.releases.pageInfo.endCursor,
-                        parseInt(query.request.data[3].value) + 1);
-                  } else {
-                    this.updateRepositoryAssetSummary(data.repository.id, GitResource.REPOSITORY_RELEASES);
-                  }
-                });
-            } else {
-              this.requestsCol
-                .doc(query.id)
-                .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
-            }
-          });
+          this.repoReleasesRequest(query);
           break;
         case GitResource.USER:
           break;
@@ -425,6 +80,460 @@ export class ResponseProcessorService {
     }
   };
 
+  /**
+   * initOrganization
+   */
+  public initOrgRequest(query) {
+    const response = query.response;
+    if (response && response.organization) {
+      this.saveOrganization(response, query.id, query.request.data[1].value, query.request.data[2].value)
+        .then(() => {
+          this.requestsCol.doc(query.id)
+            .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
+        });
+    } else {
+      this.requestsCol.doc(query.id)
+        .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
+    }
+  }
+  /**
+   * updateOrgRequest
+   */
+  public updateOrgRequest(query) {
+    const response = query.response;
+    if (response && response.organization) {
+      this.updateOrganization(
+        response,
+        query.id,
+        query.request.data[1].value,
+        query.request.data[2].value
+      )
+      .then(() => {
+        this.requestsCol.doc(query.id)
+        .update({
+          status: GitResponseStatus.SUCCESS,
+          updatedAt: new Date().toISOString()
+        });
+      });
+    }
+  }
+  public orgMemberRequest(query) {
+    const response = query.response;
+    if (response && response.organization) {
+      this.saveOrganizationMembers(
+        response.organization.members,
+        response.organization.login,
+        query.request.data[2].value)
+        .then(() => {
+          this.requestsCol.doc(query.id)
+          .update({
+            status: GitResponseStatus.SUCCESS,
+            updatedAt: new Date().toISOString()
+          });
+          if (response.organization.members.pageInfo.hasNextPage) {
+            this.githubService.requestOrganizationMembersOffset(
+                response.organization.login,
+                response.organization.members.pageInfo.endCursor,
+                query.request.parent, query.request.data[2].value);
+          } else {
+            // process organization members summary
+          }
+        });
+    } else {
+      this.requestsCol.doc(query.id)
+      .update({
+        status: GitResponseStatus.FAILED,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+  /**
+   * orgRepoRequest
+   */
+  public orgRepoRequest(query) {
+    const response = query.response;
+    if (response && response.organization) {
+      this.saveOrganizationRepositories(
+        response.organization.repositories,
+        response.organization.id,
+        query.request.data[2].value
+      )
+      .then(() => {
+        this.requestsCol.doc(query.id)
+        .update({
+          status: GitResponseStatus.SUCCESS,
+          updatedAt: new Date().toISOString()
+        });
+        if (response.organization.repositories.pageInfo.hasNextPage) {
+          this.githubService.requestOrganizationRepositoriesOffset(
+              response.organization.login,
+              response.organization.repositories.pageInfo.endCursor,
+              query.request.parent, query.request.data[2].value);
+        } else {
+          // process organization repositories summary
+          this.updateRepositoriesSummary(response.organization.id, query.request.data[0].value);
+        }
+      });
+    } else {
+      this.requestsCol.doc(query.id)
+      .update({
+        status: GitResponseStatus.FAILED,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+  /**
+   * repoRequest
+   */
+  public repoRequest(query) {
+    const res = query.response;
+    if (res && res.repository) {
+      // save the repo data
+      this.saveRepositoryAssets(res.repository)
+        .then((response) => {
+          this.requestsCol.doc(query.id)
+            .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
+          if (response) {
+            // check for pagination on all repository assets
+            if (res.repository.deployKeys.pageInfo.hasNextPage) {
+              this.githubService
+                .requestRepositoriesDataOffset(
+                  GitResource.REPOSITORY_DEPLOY_KEYS,
+                  query.request.data[0].value,
+                  query.request.data[1].value,
+                  res.repository.deployKeys.pageInfo.endCursor, 1);
+            } else {
+              this.updateRepositoryAssetSummary(
+                res.repository.id,
+                GitResource.REPOSITORY_DEPLOY_KEYS);
+            }
+
+            if (res.repository.deployments.pageInfo.hasNextPage) {
+              this.githubService
+                .requestRepositoriesDataOffset(
+                  GitResource.REPOSITORY_DEPLOYMENTS,
+                  query.request.data[0].value,
+                  query.request.data[1].value,
+                  res.repository.deployments.pageInfo.endCursor, 1);
+            } else {
+              this.updateRepositoryAssetSummary(res.repository.id, GitResource.REPOSITORY_DEPLOYMENTS);
+            }
+
+            if (res.repository.issues.pageInfo.hasNextPage) {
+              this.githubService
+                .requestRepositoriesDataOffset(
+                  GitResource.REPOSITORY_ISSUES,
+                  query.request.data[0].value,
+                  query.request.data[1].value,
+                  res.repository.issues.pageInfo.endCursor, 1);
+            } else {
+              this.updateRepositoryAssetSummary(res.repository.id, GitResource.REPOSITORY_ISSUES);
+            }
+
+            if (res.repository.milestones.pageInfo.hasNextPage) {
+              this.githubService.requestRepositoriesDataOffset(
+                GitResource.REPOSITORY_MILESTONES,
+                query.request.data[0].value,
+                query.request.data[1].value,
+                res.repository.milestones.pageInfo.endCursor, 1);
+            } else {
+              this.updateRepositoryAssetSummary(res.repository.id, GitResource.REPOSITORY_MILESTONES);
+            }
+
+            if (res.repository.projects.pageInfo.hasNextPage) {
+              this.githubService
+                .requestRepositoriesDataOffset(
+                  GitResource.REPOSITORY_PROJECTS,
+                  query.request.data[0].value,
+                  query.request.data[1].value,
+                  res.repository.projects.pageInfo.endCursor, 1);
+            } else {
+              this.updateRepositoryAssetSummary(res.repository.id, GitResource.REPOSITORY_PROJECTS);
+            }
+
+            if (res.repository.pullRequests.pageInfo.hasNextPage) {
+              this.githubService.requestRepositoriesDataOffset(
+                GitResource.REPOSITORY_PULL_REQUESTS,
+                query.request.data[0].value,
+                query.request.data[1].value,
+                res.repository.pullRequests.pageInfo.endCursor, 1);
+            } else {
+              this.updateRepositoryAssetSummary(res.repository.id, GitResource.REPOSITORY_PULL_REQUESTS);
+            }
+
+            if (res.repository.releases.pageInfo.hasNextPage) {
+              this.githubService.requestRepositoriesDataOffset(
+                GitResource.REPOSITORY_RELEASES,
+                query.request.data[0].value,
+                query.request.data[1].value,
+                res.repository.releases.pageInfo.endCursor, 1);
+            } else {
+              this.updateRepositoryAssetSummary(res.repository.id, GitResource.REPOSITORY_RELEASES);
+            }
+          }
+        });
+    } else {
+      this.requestsCol.doc(query.id)
+      .update({
+        status: GitResponseStatus.FAILED,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+  /**
+   * repoDeployKeysRequest
+   */
+  public repoDeployKeysRequest(query) {
+    const response = query.response;
+    if (response && response.repository) {
+      const deployKeys = this.mapRepositoryDeployKeys(response.repository.deployKeys.edges, response.repository.id);
+      this.saveRepositoryDeployKeys(deployKeys, response.repository.id)
+        .then(() => {
+          this.requestsCol.doc(query.id)
+            .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
+          if (response.repository.deployKeys.pageInfo.hasNextPage) {
+            this.githubService.requestRepositoriesDataOffset(
+              GitResource.REPOSITORY_DEPLOY_KEYS,
+              query.request.data[0].value,
+              query.request.data[1].value,
+              response.repository.deployKeys.pageInfo.endCursor,
+              parseInt(query.request.data[3].value) + 1);
+          } else {
+            this.updateRepositoryAssetSummary(response.repository.id, GitResource.REPOSITORY_DEPLOY_KEYS);
+          }
+        });
+    } else {
+      this.requestsCol
+      .doc(query.id)
+      .update({
+        status: GitResponseStatus.FAILED,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+  /**
+   * repoDeploymentsRequest
+   */
+  public repoDeploymentsRequest(query) {
+    const response = query.response;
+    if (response && response.repository) {
+      const deployments = this.mapRepositoryDeployments(response.repository.deployments.edges, response.repository.id);
+      this.saveRepositoryDeployments(deployments, response.repository.id)
+      .then(() => {
+        this.requestsCol.doc(query.id)
+        .update({
+          status: GitResponseStatus.SUCCESS,
+          updatedAt: new Date().toISOString(),
+        });
+        if (response.repository.deployments.pageInfo.hasNextPage) {
+          this.githubService
+            .requestRepositoriesDataOffset(GitResource.REPOSITORY_DEPLOYMENTS,
+              query.request.data[0].value,
+              query.request.data[1].value,
+              response.repository.deployments.pageInfo.endCursor,
+              parseInt(query.request.data[3].value) + 1);
+        } else {
+          this.updateRepositoryAssetSummary(response.repository.id, GitResource.REPOSITORY_DEPLOYMENTS);
+        }
+      });
+    } else {
+      this.requestsCol
+      .doc(query.id)
+      .update({
+        status: GitResponseStatus.FAILED,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+  /**
+   * repoForksRequest
+   */
+  public repoForksRequest(query) {
+    const response = query.response;
+    if (response && response.repository) {
+      const forks = this.mapRepositoryForks(response.repository.forks.edges, response.repository.id);
+      this.saveRepositoryForks(forks, response.repository.id)
+        .then(() => {
+          this.requestsCol.doc(query.id)
+            .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
+          if (response.repository.forks.pageInfo.hasNextPage) {
+            this.githubService
+              .requestRepositoriesDataOffset(
+                GitResource.REPOSITORY_FORKS,
+                query.request.data[0].value,
+                query.request.data[1].value,
+                response.repository.forks.pageInfo.endCursor,
+                parseInt(query.request.data[3].value) + 1);
+          } else {
+            this.updateRepositoryAssetSummary(response.repository.id, GitResource.REPOSITORY_FORKS);
+          }
+        });
+    } else {
+      this.requestsCol.doc(query.id)
+        .update({ status: GitResponseStatus.FAILED, updatedAt: new Date().toISOString() });
+    }
+  }
+  /**
+   * repoIssuesRequest
+   */
+  public repoIssuesRequest(query) {
+    const response = query.response;
+    if (response && response.repository) {
+      const issues = this.mapRepositoryIssues(response.repository.issues.edges, response.repository.id);
+      this.saveRepositoryIssues(issues, response.repository.id)
+        .then(() => {
+          this.requestsCol.doc(query.id)
+            .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
+          if (response.repository.issues.pageInfo.hasNextPage) {
+            this.githubService
+              .requestRepositoriesDataOffset(
+                GitResource.REPOSITORY_ISSUES,
+                query.request.data[0].value,
+                query.request.data[1].value,
+                response.repository.issues.pageInfo.endCursor,
+                parseInt(query.request.data[3].value) + 1);
+          } else {
+            this.updateRepositoryAssetSummary(response.repository.id, GitResource.REPOSITORY_ISSUES);
+          }
+        });
+    } else {
+      this.requestsCol.doc(query.id)
+      .update({
+        status: GitResponseStatus.FAILED,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+  /**
+   * repoMileStonesRequest
+   */
+  public repoMileStonesRequest(query) {
+    const response = query.response;
+    if (response && response.repository) {
+      const milestones = this.mapRepositoryMilestones(response.repository.milestones.edges, response.repository.id);
+      this.saveRepositoryMilestones(milestones, response.repository.id)
+        .then(() => {
+          if (response.repository.milestones.pageInfo.hasNextPage) {
+            this.githubService
+              .requestRepositoriesDataOffset(
+                GitResource.REPOSITORY_MILESTONES,
+                query.request.data[0].value,
+                query.request.data[1].value,
+                response.repository.milestones.pageInfo.endCursor,
+                parseInt(query.request.data[3].value) + 1);
+          } else {
+            this.updateRepositoryAssetSummary(response.repository.id, GitResource.REPOSITORY_MILESTONES);
+          }
+        });
+    } else {
+      this.requestsCol
+      .doc(query.id)
+      .update({
+        status: GitResponseStatus.FAILED,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+
+  public repoProjectsRequest(query) {
+    const response = query.response;
+    if (response && response.repository) {
+      this.requestsCol.doc(query.id)
+      .update({
+        status: GitResponseStatus.SUCCESS,
+        updatedAt: new Date().toISOString()
+      });
+      const projects = this.mapRepositoryProjects(response.repository.projects.edges, response.repository.id);
+      this.saveRepositoryProjects(projects, response.repository.id)
+        .then(() => {
+          if (response.repository.projects.pageInfo.hasNextPage) {
+            this.githubService
+              .requestRepositoriesDataOffset(
+                GitResource.REPOSITORY_PROJECTS,
+                query.request.data[0].value,
+                query.request.data[1].value,
+                response.repository.projects.pageInfo.endCursor,
+                parseInt(query.request.data[3].value) + 1);
+          } else {
+            this.updateRepositoryAssetSummary(response.repository.id, GitResource.REPOSITORY_PROJECTS);
+          }
+        });
+    } else {
+      this.requestsCol.doc(query.id)
+      .update({
+        status: GitResponseStatus.FAILED,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+  /**
+   * repoPullRequestsRequest
+   */
+  public repoPullRequestsRequest(query) {
+    const response = query.response;
+    if (response && response.repository) {
+      this.requestsCol.doc(query.id)
+      .update({
+        status: GitResponseStatus.SUCCESS,
+        updatedAt: new Date().toISOString()
+      });
+      const pullRequests =
+        this.mapRepositoryPullRequests(response.repository.pullRequests.edges, response.repository.id);
+      this.saveRepositoryPullRequests(pullRequests, response.repository.id)
+        .then(() => {
+          if (response.repository.pullRequests.pageInfo.hasNextPage) {
+            this.githubService
+              .requestRepositoriesDataOffset(
+                GitResource.REPOSITORY_PULL_REQUESTS,
+                query.request.data[0].value,
+                query.request.data[1].value,
+                response.repository.pullRequests.pageInfo.endCursor,
+                parseInt(query.request.data[3].value) + 1);
+          } else {
+            this.updateRepositoryAssetSummary(response.repository.id, GitResource.REPOSITORY_PULL_REQUESTS);
+          }
+        });
+    } else {
+      this.requestsCol
+      .doc(query.id)
+      .update({
+        status: GitResponseStatus.FAILED,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
+  /**
+   * repoReleasesRequest
+   */
+  public repoReleasesRequest(query) {
+    const response = query.response;
+    if (response && response.repository) {
+      this.requestsCol.doc(query.id)
+        .update({ status: GitResponseStatus.SUCCESS, updatedAt: new Date().toISOString() });
+      const releases = this.mapRepositoryReleases(response.repository.releases.edges, response.repository.id);
+      this.saveRepositoryReleases(releases, response.repository.id)
+        .then(() => {
+          if (response.repository.releases.pageInfo.hasNextPage) {
+            this.githubService
+              .requestRepositoriesDataOffset(
+                GitResource.REPOSITORY_RELEASES,
+                query.request.data[0].value,
+                query.request.data[1].value,
+                response.repository.releases.pageInfo.endCursor,
+                parseInt(query.request.data[3].value) + 1);
+          } else {
+            this.updateRepositoryAssetSummary(response.repository.id, GitResource.REPOSITORY_RELEASES);
+          }
+        });
+    } else {
+      this.requestsCol
+      .doc(query.id)
+      .update({
+        status: GitResponseStatus.FAILED,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  }
   public saveOrganization = (data: any, parent: string, orgId: number, orgSlug) => {
     const org = this.mapOrganization(data, orgId, orgSlug);
     return this.organizationsCol.doc(org.login.toLowerCase()).set(org)
@@ -433,10 +542,12 @@ export class ResponseProcessorService {
         this.saveOrganizationMembers(data.organization.members, data.organization.login, orgSlug).then(() => {
           if (data.organization.members.pageInfo.hasNextPage) {
             this.githubService
-              .requestOrganizationMembersOffset(
-                org.login,
-                data.organization.members.pageInfo.endCursor,
-                parent, orgSlug);
+            .requestOrganizationMembersOffset(
+              org.login,
+              data.organization.members.pageInfo.endCursor,
+              parent,
+              orgSlug
+            );
           }
         });
 
@@ -1129,7 +1240,6 @@ export class ResponseProcessorService {
       .then((docs) => {
         const status = [];
         status[asset] = docs.docs.length;
-        // console.log('summary of '+asset+' of '+repositoryId,status)
         return this.fbService.db.collection('cml-git-repositories-assets')
           .doc(repositoryId)
           .set({

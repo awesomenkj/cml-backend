@@ -36,9 +36,9 @@ export class PoolRequestService {
     return this.requestsCol.add(this.getData(request)).then((data) => {
       return { 'requestId': data.id };
     })
-      .catch((_e) => {
+    .catch((_e) => {
 
-      });
+    });
   };
 
   public getData(obj: any) {

@@ -6,10 +6,10 @@
 import { Actor } from '.';
 
 export class MilestoneEvent {
-    public actor: Actor;
-    public createdAt: Date;
-    public id: string;
-    public milestoneTitle: string;
+    public actor!: Actor;
+    public createdAt!: Date;
+    public id!: string;
+    public milestoneTitle!: string;
 
     public constructor() {
 

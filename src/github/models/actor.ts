@@ -4,10 +4,10 @@
  * https://developer.github.com/v4/interface/actor/
  */
 export class Actor {
-    public avatarUrl: string;
-    public login: string;
-    public resourcePath: string;
-    public url: string;
+    public avatarUrl!: string;
+    public login!: string;
+    public resourcePath!: string;
+    public url!: string;
 
     public constructor() {
 

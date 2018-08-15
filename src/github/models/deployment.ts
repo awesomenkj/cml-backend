@@ -6,16 +6,16 @@
 import { Actor, DeploymentStatus } from '.';
 
 export class Deployment {
-    public commitId: string;
-    public createdAt: Date;
-    public creator: Actor;
-    public databaseId: number;
-    public environment: string;
-    public id: string;
-    public latestStatus: DeploymentStatus;
-    public payload: string;
-    public repositoryId: string;
-    public state: DeploymentState;
+    public commitId!: string;
+    public createdAt!: Date;
+    public creator!: Actor;
+    public databaseId!: number;
+    public environment!: string;
+    public id!: string;
+    public latestStatus!: DeploymentStatus;
+    public payload!: string;
+    public repositoryId!: string;
+    public state!: DeploymentState;
 
     public statuses: DeploymentStatus[];
 

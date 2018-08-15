@@ -6,10 +6,10 @@
 import { GitObject } from '.';
 
 export class TreeEntry {
-    public node: number;
-    public name: string;
-    public object: GitObject;
-    public oif: string;
-    public repositoryId: string;
-    public type: string;
+    public node!: number;
+    public name!: string;
+    public object!: GitObject;
+    public oif!: string;
+    public repositoryId!: string;
+    public type!: string;
 }

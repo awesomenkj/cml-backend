@@ -6,11 +6,11 @@
 import { GitObject, PullRequest } from '.';
 
 export class Ref {
-    public id: string;
-    public name: string;
-    public prefix: string;
-    public repositoryId: string;
-    public target: GitObject;
+    public id!: string;
+    public name!: string;
+    public prefix!: string;
+    public repositoryId!: string;
+    public target!: GitObject;
 
     public associatedPullRequests: PullRequest[];
 

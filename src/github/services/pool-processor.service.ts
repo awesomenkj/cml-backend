@@ -4,7 +4,6 @@ import { GraphqlService } from './graphql.service';
 import { ResponseProcessorService } from './response-processor.service';
 import { GitResource, GitResponseStatus } from '../models/git-pool-request';
 
-// import axios from 'axios';
 const request = require('request-promise-native');
 
 @Injectable()
@@ -28,10 +27,6 @@ export class PoolProcessorService {
   public pendingRequests = [];
   public pendingRequestsPromises = [];
   public poolInterval;
-
-  public globalCounter = 0;
-  public globalResponse = 0;
-  public globalErrors = 0;
 
   public constructor(
     private fbService: FirebaseService,
@@ -86,8 +81,11 @@ export class PoolProcessorService {
         // if change is new request
         if (change.type === 'added') {
           this.newRequests = this.insertArrayElement(this.newRequests, req);
+          // tslint:disable-next-line
           console.log('New request', req.data[0].value);
+          // tslint:disable-next-line
           console.log('New Request Resource Type: ', req.resource);
+          // tslint:disable-next-line
           console.log('New Requests Length Line 91: ', this.newRequests.length);
         }
         // if request is modified
@@ -100,32 +98,35 @@ export class PoolProcessorService {
         }
       });
     }, (error) => {
+      // tslint:disable-next-line
       console.log('Error Listening Changes', error);
     });
   }
+
   /**
- * getUnProcessedRequests : Get UnprocessedRequests from Database
- * @param status number : GitResponseStatus
- * @returns
- */
+   * getUnProcessedRequests : Get UnprocessedRequests from Database
+   * @param status number : GitResponseStatus
+   * @returns
+   */
   public getUnProcessedRequests(status: GitResponseStatus) {
     this.requestsCol.where('status', '==', status).get()
-    .then(snapshot => {
-      snapshot.forEach(doc => {
-        const req = {
-          id: doc.id,
-          ...doc.data()
-        };
-        if (status === GitResponseStatus.NEW) {
-          this.newRequests = this.insertArrayElement(this.newRequests, req);
-        } else {
-          this.pendingRequests = this.insertArrayElement(this.pendingRequests, req);
-        }
+      .then(snapshot => {
+        snapshot.forEach(doc => {
+          const req = {
+            id: doc.id,
+            ...doc.data(),
+          };
+          if (status === GitResponseStatus.NEW) {
+            this.newRequests = this.insertArrayElement(this.newRequests, req);
+          } else {
+            this.pendingRequests = this.insertArrayElement(this.pendingRequests, req);
+          }
+        });
+      })
+      .catch(err => {
+        // tslint:disable-next-line
+        console.log('Error Getting documents', err);
       });
-    })
-    .catch(err => {
-      console.log('Error Getting documents', err);
-    });
   }
 
 
@@ -137,9 +138,10 @@ export class PoolProcessorService {
     for (let i = 0; i < requests.length; i++) {
       const req = requests[i];
       this.requestsCol.doc(req.id)
-      .update({ status: GitResponseStatus.PENDING, updatedAt: new Date().toISOString() });
+        .update({ status: GitResponseStatus.PENDING, updatedAt: new Date().toISOString() });
 
       this.newRequests = this.removeArrayElement(this.newRequests, req);
+      // tslint:disable-next-line
       console.log('New Requests Length Line 143: ', this.newRequests.length);
       req.status = GitResponseStatus.PENDING;
 
@@ -154,10 +156,11 @@ export class PoolProcessorService {
 
         this.pendingRequests = this.insertArrayElement(this.pendingRequests, pendingRequest);
       } catch (error) {
+        // tslint:disable-next-line
         console.log('Error Handling New Request', error);
       }
     }
-  }
+  };
 
   /**
    * proceedPendingRequests : Proceed Pending Requests
@@ -178,15 +181,15 @@ export class PoolProcessorService {
               .update({
                 status: GitResponseStatus.NEW,
                 updatedAt: new Date().toISOString(),
-                trial: currentTry
+                trial: currentTry,
               });
           } else {
             this.pendingRequests[i].processed = true;
             this.requestsCol.doc(pendingRequest.id)
-            .update({
-              status: GitResponseStatus.FAILED,
-              updatedAt: new Date().toISOString()
-            });
+              .update({
+                status: GitResponseStatus.FAILED,
+                updatedAt: new Date().toISOString(),
+              });
           }
         }
       }
@@ -203,75 +206,75 @@ export class PoolProcessorService {
       case GitResource.ORGANIZATION_MEMBERS:
         response = await this.fetchOrganizationMembers(
           request.data[0].value,
-          request.data[1].value
+          request.data[1].value,
         );
         break;
       case GitResource.ORGANIZATION_REPOSITORIES:
         response = await this.fetchOrganizationRepositories(
           request.data[0].value,
-          request.data[1].value
+          request.data[1].value,
         );
         break;
       case GitResource.REPOSITORY:
         response = await this.fetchRepository(
           request.data[0].value,
-          request.data[1].value
+          request.data[1].value,
         );
         break;
       case GitResource.REPOSITORY_DEPLOY_KEYS:
         response = await this.fetchRepositoryDeployKeysOffset(
           request.data[0].value,
           request.data[1].value,
-          request.data[2].value
+          request.data[2].value,
         );
         break;
       case GitResource.REPOSITORY_DEPLOYMENTS:
         response = await this.fetchRepositoryDeploymentsOffset(
           request.data[0].value,
           request.data[1].value,
-          request.data[2].value
+          request.data[2].value,
         );
         break;
       case GitResource.REPOSITORY_FORKS:
         response = await this.fetchRepositoryForksOffset(
           request.data[0].value,
           request.data[1].value,
-          request.data[2].value
+          request.data[2].value,
         );
         break;
       case GitResource.REPOSITORY_ISSUES:
         response = await this.fetchRepositoryIssuesOffset(
           request.data[0].value,
           request.data[1].value,
-          request.data[2].value
+          request.data[2].value,
         );
         break;
       case GitResource.REPOSITORY_MILESTONES:
         response = await this.fetchRepositoryMilestonesOffset(
           request.data[0].value,
           request.data[1].value,
-          request.data[2].value
+          request.data[2].value,
         );
         break;
       case GitResource.REPOSITORY_PROJECTS:
         response = await this.fetchRepositoryProjectsOffset(
           request.data[0].value,
           request.data[1].value,
-          request.data[2].value
+          request.data[2].value,
         );
         break;
       case GitResource.REPOSITORY_PULL_REQUESTS:
         response = await this.fetchRepositoryPullRequestsOffset(
           request.data[0].value,
           request.data[1].value,
-          request.data[2].value
+          request.data[2].value,
         );
         break;
       case GitResource.REPOSITORY_RELEASES:
         response = await this.fetchRepositoryReleasesOffset(
           request.data[0].value,
           request.data[1].value,
-          request.data[2].value
+          request.data[2].value,
         );
         break;
       case GitResource.USER:
@@ -390,6 +393,7 @@ export class PoolProcessorService {
    * @param query GraphQL Query String
    * @returns
    */
+
   public gitPromise = async (query) => {
 
     try {
@@ -409,20 +413,21 @@ export class PoolProcessorService {
   };
 
   /***************************************************************************
-  ***************************** Helper Functions *****************************
-  ***************************************************************************/
- /**
-  * insertArrayElement : Insert New Request Object To Requests Array
-  * @param array Requests Array
-  * @param element Request Object
-  * @returns
-  */
- public insertArrayElement(array, element) {
-  if (array.filter((ele) => ele.id === element.id).length === 0) {
-    array.push(element);
+   ***************************** Helper Functions *****************************
+   ***************************************************************************/
+  /**
+   * insertArrayElement : Insert New Request Object To Requests Array
+   * @param array Requests Array
+   * @param element Request Object
+   * @returns
+   */
+  public insertArrayElement(array, element) {
+    if (array.filter((ele) => ele.id === element.id).length === 0) {
+      array.push(element);
+    }
+    return this.sortArray(array);
   }
-  return this.sortArray(array);
- }
+
   /**
    * updateArrayElement : Update A Element In Requests Array
    * @param array Requests Array

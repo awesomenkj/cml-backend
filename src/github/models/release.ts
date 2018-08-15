@@ -6,17 +6,17 @@
 import { ReleaseAsset, User } from '.';
 
 export class Release {
-    public author: User;
-    public createdAt: Date;
-    public description: string;
-    public id: string;
-    public isDraft: boolean;
-    public isPrerelease: boolean;
-    public name: string;
-    public publishedAt: Date;
-    public resourcePath: string;
-    public updatedAt: Date;
-    public url: string;
+    public author!: User;
+    public createdAt!: Date;
+    public description!: string;
+    public id!: string;
+    public isDraft!: boolean;
+    public isPrerelease!: boolean;
+    public name!: string;
+    public publishedAt!: Date;
+    public resourcePath!: string;
+    public updatedAt!: Date;
+    public url!: string;
 
     public releaseAssets: ReleaseAsset[];
 

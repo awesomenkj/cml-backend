@@ -6,14 +6,14 @@
 import { Actor } from '.';
 
 export class StatusContext {
-    public commitId: string;
-    public context: string;
-    public createdAt: Date;
-    public creator: Actor;
-    public description: string;
-    public id: string;
-    public state: StatusState;
-    public targetUrl: string;
+    public commitId!: string;
+    public context!: string;
+    public createdAt!: Date;
+    public creator!: Actor;
+    public description!: string;
+    public id!: string;
+    public state!: StatusState;
+    public targetUrl!: string;
 }
 
 export enum StatusState {

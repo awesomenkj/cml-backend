@@ -4,7 +4,7 @@ import * as firebase from 'firebase';
 @Injectable()
 export class FirebaseService {
 
-    public config = {
+    public readonly config = {
         apiKey: 'AIzaSyAL8YojUMG1flU4VjoYhgCHGHOukfvjB7I',
         authDomain: 'ck-bot-fc3be.firebaseapp.com',
         databaseURL: 'https://ck-bot-fc3be.firebaseio.com',

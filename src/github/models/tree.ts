@@ -6,12 +6,12 @@
 import { TreeEntry } from '.';
 
 export class Tree {
-    public abbreviatedOid: string;
-    public commitResourcePath: string;
-    public commitUrl: string;
-    public id: string;
-    public oid: string;
-    public repositoryId: string;
+    public abbreviatedOid!: string;
+    public commitResourcePath!: string;
+    public commitUrl!: string;
+    public id!: string;
+    public oid!: string;
+    public repositoryId!: string;
 
     public entries: TreeEntry[];
 

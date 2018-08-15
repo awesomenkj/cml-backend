@@ -6,17 +6,17 @@
 import { LicenseRule } from '.';
 
 export class License {
-    public body: string;
-    public description: string;
-    public featured: boolean;
-    public hidden: boolean;
-    public id: string;
-    public implementation: string;
-    public key: string;
-    public name: string;
-    public nickname: string;
-    public spdxId: string;
-    public uri: string;
+    public body!: string;
+    public description!: string;
+    public featured!: boolean;
+    public hidden!: boolean;
+    public id!: string;
+    public implementation!: string;
+    public key!: string;
+    public name!: string;
+    public nickname!: string;
+    public spdxId!: string;
+    public uri!: string;
 
     public conditions: LicenseRule[];
     public limitations: LicenseRule[];
